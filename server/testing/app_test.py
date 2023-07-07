@@ -1,15 +1,30 @@
 from os import environ
 import re
+import pytest
 
-from app import app
+from app import app, db, Animal
 
 class TestApp:
     '''Flask application in flask_app.py'''
 
+    def setup_method(self):
+        db.create_all()
+
+    def teardown_method(self):
+        db.session.remove()
+        db.drop_all()
+
+
     def test_animal_route(self):
-        '''has a resource available at "/animal/<id>".'''
-        response = app.test_client().get('/animal/1')
-        assert(response.status_code == 200)
+     with app.app_context():
+        # Insert an animal with ID 1 into the database
+        animal = Animal(id=1, name='Lion', species='Panthera leo')
+        db.session.add(animal)
+        db.session.commit()
+
+    response = app.test_client().get('/animal/1')
+    assert response.status_code == 200
+
 
     def test_animal_route_has_attrs(self):
         '''displays attributes in animal route in <ul> tags called Name, Species.'''
